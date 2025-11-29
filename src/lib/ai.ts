@@ -30,7 +30,7 @@ if (isGoogleKeyValid) {
 
 export const model = selectedModel;
 
-export type GeneratorType = 'quiz' | 'vocab' | 'grammar' | 'reading';
+export type GeneratorType = 'quiz' | 'vocab' | 'grammar' | 'reading' | 'listening';
 
 export const GENERATORS: { id: GeneratorType; name: string; description: string; prompt: string; system: string }[] = [
     {
@@ -60,6 +60,13 @@ export const GENERATORS: { id: GeneratorType; name: string; description: string;
         description: 'Generate a short story with comprehension questions.',
         prompt: 'Write a short reading passage (approx 200-300 words) and 5 comprehension questions about it based on the following topic.',
         system: 'You are a creative writer for educational materials. Write engaging, culturally diverse, and age-appropriate reading passages. Ensure the language level is consistent (Intermediate/B1-B2 unless specified otherwise). Follow the passage with open-ended or multiple-choice comprehension questions that test understanding, not just memory.',
+    },
+    {
+        id: 'listening',
+        name: 'Listening Script',
+        description: 'Generate a dialogue or monologue for listening practice.',
+        prompt: 'Write a listening script (dialogue or monologue) about the following topic. Indicate speakers clearly (e.g., Speaker A, Speaker B).',
+        system: 'You are an expert in creating ESL listening materials. Write natural-sounding dialogues or monologues. Include "audio cues" in parentheses if necessary (e.g., [Sound of door opening]). Ensure the vocabulary is appropriate for learners. If it is a dialogue, make the interaction natural.',
     },
 ];
 
