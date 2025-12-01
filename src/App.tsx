@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
 import { useWorkspaceStore } from './store/workspaceStore';
 import { Button } from './components/ui/button';
-import { ArrowLeft, Save, Download, FileText, File } from 'lucide-react';
+import { Save, Download, FileText, File, ChevronLeft } from 'lucide-react';
 import GeneratorPanel from './components/generators/GeneratorPanel';
 import RichTextEditor from './components/editor/RichTextEditor';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ThemeToggle } from '@/components/ThemeToggle';
 // @ts-ignore
 const { ipcRenderer } = window.require('electron');
 
@@ -79,48 +80,69 @@ function App() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50">
-      <header className="border-b bg-white px-6 py-3 flex items-center justify-between shadow-sm z-10">
+    <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden bg-dot-pattern bg-aurora">
+      {/* Premium Header */}
+      <header className="border-b border-border/40 bg-background/80 backdrop-blur-md px-6 py-3 flex items-center justify-between shadow-sm z-50 sticky top-0">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => setCurrentWorkspace('')}>
-            <ArrowLeft className="h-5 w-5" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCurrentWorkspace('')}
+            className="text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+          >
+            <ChevronLeft className="h-5 w-5 mr-1" />
+            Back
           </Button>
-          <h1 className="text-xl font-serif font-medium text-slate-900">Workspace Editor</h1>
+          <div className="h-6 w-px bg-border/60" />
+          <h1 className="text-sm font-medium tracking-tight text-muted-foreground/80">
+            The Saber Scribe / Editor
+          </h1>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
-            <Save className="h-4 w-4" /> Save
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" className="gap-2 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all">
+            <Save className="h-4 w-4" />
+            <span className="hidden sm:inline">Save</span>
           </Button>
+
+          <ThemeToggle />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" className="gap-2">
-                <Download className="h-4 w-4" /> Export
+              <Button size="sm" className="gap-2 shadow-md shadow-primary/20 hover:shadow-primary/30 transition-all">
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Export</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExportPDF}>
-                <File className="mr-2 h-4 w-4" />
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={handleExportPDF} className="cursor-pointer">
+                <File className="mr-2 h-4 w-4 text-red-500" />
                 Export as PDF
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportWord}>
-                <FileText className="mr-2 h-4 w-4" />
+              <DropdownMenuItem onClick={handleExportWord} className="cursor-pointer">
+                <FileText className="mr-2 h-4 w-4 text-blue-500" />
                 Export as Word
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </header>
+
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Generator Panel (Left Sidebar) */}
         <GeneratorPanel onContentGenerated={handleContentGenerated} editorContent={editorContent} />
 
         {/* Editor Area */}
-        <main className="flex-1 p-6 overflow-hidden bg-slate-50">
-          <div className="h-full max-w-4xl mx-auto">
-            <RichTextEditor content={editorContent} onChange={handleEditorChange} />
+        <main className="flex-1 overflow-hidden bg-muted/20 relative">
+          {/* Decorative background elements */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent pointer-events-none" />
+
+          <div className="h-full w-full overflow-y-auto p-8 scroll-smooth">
+            <div className="max-w-4xl mx-auto min-h-[calc(100vh-8rem)]">
+              <RichTextEditor content={editorContent} onChange={handleEditorChange} />
+            </div>
+            <div className="h-20" /> {/* Bottom spacer */}
           </div>
         </main>
       </div>

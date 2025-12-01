@@ -22,7 +22,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         },
         editorProps: {
             attributes: {
-                class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[500px] p-8',
+                class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[500px] p-8 text-foreground prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-code:text-primary',
             },
         },
     });
@@ -75,15 +75,15 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
             variant="ghost"
             size="sm"
             onClick={onClick}
-            className={isActive ? 'bg-slate-200 text-slate-900' : 'text-slate-500 hover:text-slate-900'}
+            className={isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}
         >
             <Icon className="h-4 w-4" />
         </Button>
     );
 
     return (
-        <div className="flex flex-col h-full bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative">
-            <div className="flex items-center gap-1 p-2 border-b border-slate-100 bg-slate-50/50 flex-wrap">
+        <div className="flex flex-col h-full bg-background rounded-xl border border-border/60 shadow-xl shadow-primary/5 overflow-hidden relative transition-all duration-300">
+            <div className="flex items-center gap-1 p-2 border-b border-border bg-muted/30 flex-wrap backdrop-blur-sm">
                 <ToolbarButton
                     onClick={() => editor.chain().focus().toggleBold().run()}
                     isActive={editor.isActive('bold')}
@@ -94,7 +94,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
                     isActive={editor.isActive('italic')}
                     icon={Italic}
                 />
-                <div className="w-px h-6 bg-slate-200 mx-1" />
+                <div className="w-px h-6 bg-border mx-1" />
                 <ToolbarButton
                     onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
                     isActive={editor.isActive('heading', { level: 1 })}
@@ -105,7 +105,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
                     isActive={editor.isActive('heading', { level: 2 })}
                     icon={Heading2}
                 />
-                <div className="w-px h-6 bg-slate-200 mx-1" />
+                <div className="w-px h-6 bg-border mx-1" />
                 <ToolbarButton
                     onClick={() => editor.chain().focus().toggleBulletList().run()}
                     isActive={editor.isActive('bulletList')}
@@ -122,17 +122,17 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
                     icon={Quote}
                 />
 
-                <div className="w-px h-6 bg-slate-200 mx-1" />
+                <div className="w-px h-6 bg-border mx-1" />
 
                 {/* AI Refinement Dropdown */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="gap-1 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50">
+                        <Button variant="ghost" size="sm" className="gap-1 text-primary hover:text-primary hover:bg-primary/10 transition-colors">
                             <Sparkles className="h-4 w-4" />
                             <span className="text-xs font-medium">AI Refine</span>
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
+                    <DropdownMenuContent align="start" className="border-border bg-popover text-popover-foreground">
                         <DropdownMenuItem onClick={() => handleRefine('simplify')} disabled={isRefining} title="Rewrite text to be simpler and easier to understand.">
                             <ArrowDown className="mr-2 h-4 w-4 text-green-500" /> Simplify
                         </DropdownMenuItem>
@@ -162,7 +162,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
                 />
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-white">
+            <div className="flex-1 overflow-y-auto bg-card">
                 <EditorContent editor={editor} />
             </div>
         </div>

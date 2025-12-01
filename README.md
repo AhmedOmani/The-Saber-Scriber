@@ -6,7 +6,7 @@ Built for simplicity and speed, it acts as a "Co-pilot" for creating quizzes, vo
 
 ## Key Features
 
-*   **AI Generators:** Instantly create Quizzes, Vocabulary Lists, Grammar Exercises, Reading Comprehension stories, and **Listening Scripts**.
+*   **AI Generators:** Instantly create Quizzes, Vocabulary Lists, Grammar Exercises, Reading Comprehension stories, and Listening Scripts.
 *   **Smart Context:** The AI "reads" what you are working on, so you can generate questions based on the story you just wrote.
 *   **Rich Text Editor:** A beautiful, distraction-free editor to format your lessons.
 *   **AI Refinement:** "Magic" tools to Simplify, Harden, Expand, or Fix Grammar in your text.

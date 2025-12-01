@@ -136,7 +136,6 @@ ipcMain.handle('export-to-pdf', async (event, htmlContent) => {
         }
     }
     return { canceled: true };
-    return { canceled: true };
 });
 
 // Workspace Persistence Handlers

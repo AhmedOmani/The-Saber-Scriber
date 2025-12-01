@@ -81,8 +81,6 @@ export default function GeneratorPanel({ onContentGenerated, editorContent }: Ge
             }
 
             if (editorContent && editorContent.trim().length > 0) {
-                // Strip HTML tags for cleaner context if needed, or keep as is. 
-                // For now, we'll pass it as is, but maybe adding a label.
                 promptText += `Current Editor Content (Context of what has been done so far):\n${editorContent}\n\n`;
             }
 
@@ -111,59 +109,72 @@ export default function GeneratorPanel({ onContentGenerated, editorContent }: Ge
     };
 
     return (
-        <div className="h-full flex flex-col bg-white border-r border-slate-200 w-[400px]">
-            <div className="p-6 border-b border-slate-100">
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-indigo-500" />
+        <div className="h-full flex flex-col bg-card border-r border-border/60 w-[400px] shadow-xl z-20">
+            <div className="p-6 border-b border-border/40 bg-muted/10 backdrop-blur-sm">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                    </div>
                     AI Generator
                 </h2>
-                <p className="text-sm text-slate-500 mt-1">Create materials from topics or files.</p>
+                <p className="text-sm text-muted-foreground mt-2">Create materials from topics or files.</p>
             </div>
 
             <ScrollArea className="flex-1 p-6">
-                <div className="space-y-6">
-                    <div className="space-y-2">
-                        <Label>Content Type</Label>
-                        <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-8">
+                    <div className="space-y-4">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Content Type</Label>
+                        <div className="grid grid-cols-2 gap-3">
                             {GENERATORS.map((gen) => (
                                 <div
                                     key={gen.id}
                                     onClick={() => setSelectedGenerator(gen.id)}
-                                    className={`cursor-pointer rounded-lg border p-3 text-sm transition-all hover:bg-slate-50 ${selectedGenerator === gen.id
-                                        ? 'border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500'
-                                        : 'border-slate-200'
+                                    className={`cursor-pointer rounded-xl border p-4 text-sm transition-all duration-200 hover:shadow-md flex flex-col gap-2 relative overflow-hidden group ${selectedGenerator === gen.id
+                                        ? 'border-primary bg-primary/10 ring-1 ring-primary/20'
+                                        : 'border-border hover:border-primary/50 hover:bg-muted/50'
                                         }`}
                                 >
-                                    <div className="font-medium text-slate-900">{gen.name}</div>
+                                    <div className={`p-2 rounded-lg w-fit transition-colors ${selectedGenerator === gen.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground group-hover:text-primary group-hover:bg-primary/10'}`}>
+                                        {gen.id === 'quiz' && <FileText className="h-4 w-4" />}
+                                        {gen.id === 'vocab' && <FileText className="h-4 w-4" />}
+                                        {gen.id === 'grammar' && <FileText className="h-4 w-4" />}
+                                        {gen.id === 'reading' && <FileText className="h-4 w-4" />}
+                                        {gen.id === 'listening' && <FileText className="h-4 w-4" />}
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-foreground text-xs">{gen.name}</div>
+                                    </div>
+                                    {selectedGenerator === gen.id && (
+                                        <div className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary animate-pulse" />
+                                    )}
                                 </div>
                             ))}
                         </div>
-                        <p className="text-xs text-slate-500 mt-2">
-                            {GENERATORS.find(g => g.id === selectedGenerator)?.description}
-                        </p>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="topic">Topic / Instructions</Label>
+                    <div className="space-y-3">
+                        <Label htmlFor="topic" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Topic / Instructions</Label>
                         <Textarea
                             id="topic"
                             placeholder="E.g., Past Tense verbs, Travel vocabulary..."
-                            className="min-h-[100px] resize-none"
+                            className="min-h-[120px] resize-none bg-background border-border focus:border-primary focus:ring-primary/20 transition-all rounded-xl"
                             value={topic}
                             onChange={(e) => setTopic(e.target.value)}
                         />
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>Reference Document</Label>
+                    <div className="space-y-3">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Reference Document</Label>
                         {!attachedFile ? (
                             <div
-                                className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-slate-50 transition-colors"
+                                className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all group"
                                 onClick={() => fileInputRef.current?.click()}
                             >
-                                <Upload className="h-8 w-8 text-slate-400 mb-2" />
-                                <p className="text-sm text-slate-600 font-medium">Click to upload file</p>
-                                <p className="text-xs text-slate-400 mt-1">.txt, .md supported</p>
+                                <div className="p-3 bg-muted rounded-full mb-3 group-hover:bg-primary/10 transition-colors">
+                                    <Upload className="h-6 w-6 text-muted-foreground group-hover:text-primary" />
+                                </div>
+                                <p className="text-sm text-foreground font-medium">Click to upload file</p>
+                                <p className="text-xs text-muted-foreground mt-1">.txt, .md, .pdf, .docx</p>
                                 <input
                                     type="file"
                                     ref={fileInputRef}
@@ -173,15 +184,17 @@ export default function GeneratorPanel({ onContentGenerated, editorContent }: Ge
                                 />
                             </div>
                         ) : (
-                            <div className="flex items-center justify-between p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
-                                <div className="flex items-center gap-2 overflow-hidden">
-                                    <FileText className="h-4 w-4 text-indigo-600 flex-shrink-0" />
-                                    <span className="text-sm text-indigo-900 truncate">{attachedFile.name}</span>
+                            <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-xl">
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <div className="p-2 bg-background rounded-lg border border-border">
+                                        <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+                                    </div>
+                                    <span className="text-sm font-medium text-foreground truncate">{attachedFile.name}</span>
                                 </div>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-6 w-6 text-indigo-400 hover:text-indigo-700"
+                                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
                                     onClick={() => {
                                         setAttachedFile(null);
                                         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -195,9 +208,9 @@ export default function GeneratorPanel({ onContentGenerated, editorContent }: Ge
                 </div>
             </ScrollArea>
 
-            <div className="p-6 border-t border-slate-100 bg-slate-50/50">
+            <div className="p-6 border-t border-border/40 bg-muted/10 backdrop-blur-sm">
                 <Button
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200"
+                    className="w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all duration-300 hover:scale-[1.02]"
                     size="lg"
                     onClick={handleGenerate}
                     disabled={isLoading || (!topic && !attachedFile)}
