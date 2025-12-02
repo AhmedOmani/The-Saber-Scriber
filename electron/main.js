@@ -11,6 +11,8 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1200,
         height: 800,
+        frame: false, // Disable native frame
+        titleBarStyle: 'hidden', // Hide native title bar
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false, // For simpler local dev, can be hardened later
@@ -21,7 +23,8 @@ function createWindow() {
     // In development, load the Vite dev server URL
     if (process.env.NODE_ENV === 'development') {
         mainWindow.loadURL('http://localhost:5173');
-        mainWindow.webContents.openDevTools();
+        // Open DevTools only if specifically requested or in debug mode
+        // mainWindow.webContents.openDevTools(); 
     } else {
         mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
     }
@@ -31,7 +34,7 @@ function createWindow() {
     });
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
     createWindow();
 
     app.on('activate', () => {
@@ -39,6 +42,26 @@ app.whenReady().then(() => {
             createWindow();
         }
     });
+
+    // Check for updates
+    if (process.env.NODE_ENV !== 'development') {
+        const { autoUpdater } = await import('electron-updater');
+        const log = await import('electron-log');
+
+        log.transports.file.level = 'info';
+        autoUpdater.logger = log;
+
+        // Update events
+        autoUpdater.on('update-available', () => {
+            mainWindow?.webContents.send('update-available');
+        });
+
+        autoUpdater.on('update-downloaded', () => {
+            mainWindow?.webContents.send('update-downloaded');
+        });
+
+        autoUpdater.checkForUpdatesAndNotify();
+    }
 });
 
 app.on('window-all-closed', () => {
@@ -49,6 +72,23 @@ app.on('window-all-closed', () => {
 
 // IPC Handlers
 ipcMain.handle('ping', () => 'pong');
+
+// Window Control Handlers
+ipcMain.handle('window-minimize', () => {
+    mainWindow?.minimize();
+});
+
+ipcMain.handle('window-maximize', () => {
+    if (mainWindow?.isMaximized()) {
+        mainWindow?.unmaximize();
+    } else {
+        mainWindow?.maximize();
+    }
+});
+
+ipcMain.handle('window-close', () => {
+    mainWindow?.close();
+});
 
 ipcMain.handle('export-to-word', async (event, htmlContent) => {
     const { dialog } = await import('electron');
@@ -210,4 +250,9 @@ ipcMain.handle('delete-workspace', async (event, id) => {
         console.error('Failed to delete workspace:', error);
         return { success: false, error: error.message };
     }
+});
+
+ipcMain.handle('restart-app', () => {
+    const { autoUpdater } = require('electron-updater');
+    autoUpdater.quitAndInstall();
 });

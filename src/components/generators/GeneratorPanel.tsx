@@ -1,6 +1,7 @@
 
 import { useState, useRef } from 'react';
-import { GENERATORS, type GeneratorType, model } from '@/lib/ai';
+import { toast } from 'sonner';
+import { GENERATORS, type GeneratorType, getModel } from '@/lib/ai';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,7 +23,7 @@ export default function GeneratorPanel({ onContentGenerated, editorContent }: Ge
     const [selectedGenerator, setSelectedGenerator] = useState<GeneratorType>('quiz');
     const [topic, setTopic] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [attachedFile, setAttachedFile] = useState<{ name: string; content: string } | null>(null);
+    const [attachedFiles, setAttachedFiles] = useState<{ name: string; content: string }[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,19 +52,26 @@ export default function GeneratorPanel({ onContentGenerated, editorContent }: Ge
             } else if (file.type === 'text/plain' || file.name.endsWith('.md') || file.name.endsWith('.txt')) {
                 text = await file.text();
             } else {
-                alert("Unsupported file type. Please use .txt, .md, .docx, or .pdf");
+                toast.error("Unsupported file type. Please use .txt, .md, .docx, or .pdf");
                 return;
             }
 
-            setAttachedFile({ name: file.name, content: text });
+            setAttachedFiles(prev => [...prev, { name: file.name, content: text }]);
+            // Reset input so same file can be selected again if needed (though unlikely immediately)
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            toast.success(`Attached ${file.name}`);
         } catch (error) {
             console.error("File parsing error:", error);
-            alert("Failed to read file. Please ensure it is a valid document.");
+            toast.error("Failed to read file. Please ensure it is a valid document.");
         }
     };
 
+    const removeFile = (index: number) => {
+        setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
     const handleGenerate = async () => {
-        if (!topic && !attachedFile && !editorContent) return;
+        if (!topic && attachedFiles.length === 0 && !editorContent) return;
 
         setIsLoading(true);
         try {
@@ -76,8 +84,11 @@ export default function GeneratorPanel({ onContentGenerated, editorContent }: Ge
                 promptText += `Context/Topic: ${topic}\n\n`;
             }
 
-            if (attachedFile) {
-                promptText += `Attached Document Content (${attachedFile.name}):\n${attachedFile.content}\n\n`;
+            if (attachedFiles.length > 0) {
+                promptText += `Attached Documents:\n`;
+                attachedFiles.forEach((file, index) => {
+                    promptText += `--- Document ${index + 1}: ${file.name} ---\n${file.content}\n\n`;
+                });
             }
 
             if (editorContent && editorContent.trim().length > 0) {
@@ -90,8 +101,10 @@ export default function GeneratorPanel({ onContentGenerated, editorContent }: Ge
                 system: generator.system
             });
 
+            const currentModel = getModel();
+
             const result = await generateText({
-                model: model,
+                model: currentModel,
                 prompt: promptText,
                 system: generator.system,
             });
@@ -100,9 +113,10 @@ export default function GeneratorPanel({ onContentGenerated, editorContent }: Ge
             console.log("Generated Text:", result.text);
 
             onContentGenerated(result.text);
+            toast.success("Content generated successfully!");
         } catch (error) {
             console.error("Generation failed:", error);
-            alert("Generation failed. Please check your API Key in .env and internet connection.");
+            toast.error("Generation failed. Please check your API Key in Settings and internet connection.");
         } finally {
             setIsLoading(false);
         }
@@ -165,16 +179,34 @@ export default function GeneratorPanel({ onContentGenerated, editorContent }: Ge
 
                     <div className="space-y-3">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Reference Document</Label>
-                        {!attachedFile ? (
+                        <div className="space-y-2">
+                            {attachedFiles.map((file, index) => (
+                                <div key={index} className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-xl animate-in fade-in slide-in-from-top-2">
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <div className="p-2 bg-background rounded-lg border border-border">
+                                            <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+                                        </div>
+                                        <span className="text-sm font-medium text-foreground truncate max-w-[200px]">{file.name}</span>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
+                                        onClick={() => removeFile(index)}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ))}
+
                             <div
-                                className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all group"
+                                className="border-2 border-dashed border-border rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all group"
                                 onClick={() => fileInputRef.current?.click()}
                             >
-                                <div className="p-3 bg-muted rounded-full mb-3 group-hover:bg-primary/10 transition-colors">
-                                    <Upload className="h-6 w-6 text-muted-foreground group-hover:text-primary" />
+                                <div className="flex items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
+                                    <Upload className="h-4 w-4" />
+                                    <span className="text-sm font-medium">Add Reference File</span>
                                 </div>
-                                <p className="text-sm text-foreground font-medium">Click to upload file</p>
-                                <p className="text-xs text-muted-foreground mt-1">.txt, .md, .pdf, .docx</p>
                                 <input
                                     type="file"
                                     ref={fileInputRef}
@@ -183,27 +215,7 @@ export default function GeneratorPanel({ onContentGenerated, editorContent }: Ge
                                     onChange={handleFileChange}
                                 />
                             </div>
-                        ) : (
-                            <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-xl">
-                                <div className="flex items-center gap-3 overflow-hidden">
-                                    <div className="p-2 bg-background rounded-lg border border-border">
-                                        <FileText className="h-4 w-4 text-primary flex-shrink-0" />
-                                    </div>
-                                    <span className="text-sm font-medium text-foreground truncate">{attachedFile.name}</span>
-                                </div>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
-                                    onClick={() => {
-                                        setAttachedFile(null);
-                                        if (fileInputRef.current) fileInputRef.current.value = '';
-                                    }}
-                                >
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
+                        </div>
                     </div>
                 </div>
             </ScrollArea>
@@ -213,7 +225,7 @@ export default function GeneratorPanel({ onContentGenerated, editorContent }: Ge
                     className="w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all duration-300 hover:scale-[1.02]"
                     size="lg"
                     onClick={handleGenerate}
-                    disabled={isLoading || (!topic && !attachedFile)}
+                    disabled={isLoading || (!topic && attachedFiles.length === 0)}
                 >
                     {isLoading ? (
                         <>

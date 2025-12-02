@@ -1,34 +1,26 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 
-// Check for API keys
-const googleKey = import.meta.env.VITE_GOOGLE_GENERATIVE_AI_API_KEY;
-const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
+// Dynamic Model Creator
+export const getModel = () => {
+    const storedKey = localStorage.getItem('gemini_api_key');
+    const envKey = import.meta.env.VITE_GOOGLE_GENERATIVE_AI_API_KEY;
 
-let selectedModel;
+    // Prioritize stored key, then env key
+    const apiKey = storedKey || envKey;
 
-// Check if Google key is valid (not empty and not the placeholder)
-const isGoogleKeyValid = googleKey && googleKey !== 'your_gemini_key_here';
-const isOpenAIKeyValid = openaiKey && openaiKey !== 'your_openai_key_here';
+    if (!apiKey || apiKey === 'your_gemini_key_here') {
+        console.warn("No valid API key found.");
+        // Return a dummy or handle error gracefully in UI
+        const google = createGoogleGenerativeAI({ apiKey: '' });
+        return google('gemini-1.5-pro-latest');
+    }
 
-console.log('API Config Check:', {
-    google: isGoogleKeyValid ? 'Valid' : 'Invalid/Placeholder',
-    openai: isOpenAIKeyValid ? 'Valid' : 'Invalid/Placeholder'
-});
+    const google = createGoogleGenerativeAI({ apiKey });
+    return google('gemini-1.5-pro-latest');
+};
 
-if (isGoogleKeyValid) {
-    const google = createGoogleGenerativeAI({ apiKey: googleKey });
-    selectedModel = google('gemini-1.5-pro-latest');
-} else if (isOpenAIKeyValid) {
-    const openai = createOpenAI({ apiKey: openaiKey });
-    selectedModel = openai('gpt-4o');
-} else {
-    console.warn("No valid API key found. Using dummy Google key.");
-    const google = createGoogleGenerativeAI({ apiKey: '' });
-    selectedModel = google('gemini-1.5-pro-latest');
-}
-
-export const model = selectedModel;
+export const model = getModel(); // Keep for backward compatibility, but prefer getModel() in new code
 
 export type GeneratorType = 'quiz' | 'vocab' | 'grammar' | 'reading' | 'listening';
 

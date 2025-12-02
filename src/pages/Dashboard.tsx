@@ -5,7 +5,21 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Plus, Clock, ArrowRight, Trash2 } from 'lucide-react';
+import { TitleBar } from '@/components/TitleBar';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { SettingsDialog } from '@/components/SettingsDialog';
 
 export default function Dashboard() {
     const { workspaces, addWorkspace, setCurrentWorkspace, loadWorkspaces, deleteWorkspace } = useWorkspaceStore();
@@ -26,19 +40,15 @@ export default function Dashboard() {
         setIsDialogOpen(false);
     };
 
-    const handleDeleteWorkspace = (e: React.MouseEvent, id: string) => {
-        e.stopPropagation();
-        if (confirm('Are you sure you want to delete this workspace?')) {
-            deleteWorkspace(id);
-        }
-    };
+
 
     return (
-        <div className="min-h-screen bg-background text-foreground bg-dot-pattern relative">
+        <div className="min-h-screen bg-background text-foreground bg-dot-pattern relative flex flex-col">
+            <TitleBar />
             {/* Ambient background glow */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent pointer-events-none" />
 
-            <div className="max-w-6xl mx-auto p-10 relative z-10">
+            <div className="max-w-[1600px] mx-auto p-10 relative z-10">
                 <header className="mb-16 flex justify-between items-center relative">
                     <div>
                         <h1 className="text-6xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 drop-shadow-sm">
@@ -47,6 +57,11 @@ export default function Dashboard() {
                         <p className="text-xl text-muted-foreground mt-3 font-light tracking-wide">
                             Manage your English teaching materials with AI.
                         </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <SettingsDialog />
+                        <ThemeToggle />
                     </div>
 
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -115,14 +130,40 @@ export default function Dashboard() {
                                         <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors duration-300">
                                             {workspace.name}
                                         </CardTitle>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive hover:bg-destructive/10 -mt-2 -mr-2"
-                                            onClick={(e) => handleDeleteWorkspace(e, workspace.id)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive hover:bg-destructive/10 -mt-2 -mr-2"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This action cannot be undone. This will permanently delete the workspace
+                                                        <span className="font-semibold text-foreground"> "{workspace.name}" </span>
+                                                        and all its contents.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            deleteWorkspace(workspace.id);
+                                                        }}
+                                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                    >
+                                                        Delete
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </div>
                                     <CardDescription className="line-clamp-2 mt-2 text-sm">
                                         {workspace.description || "New English teaching workspace"}

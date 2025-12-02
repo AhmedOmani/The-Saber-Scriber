@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
+import Welcome from './pages/Welcome';
 import { useWorkspaceStore } from './store/workspaceStore';
 import { Button } from './components/ui/button';
+import { Toaster } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { Save, Download, FileText, File, ChevronLeft } from 'lucide-react';
 import GeneratorPanel from './components/generators/GeneratorPanel';
 import RichTextEditor from './components/editor/RichTextEditor';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { TitleBar } from '@/components/TitleBar';
 // @ts-ignore
 const { ipcRenderer } = window.require('electron');
 
@@ -15,6 +18,8 @@ import { marked } from 'marked';
 function App() {
   const { currentWorkspaceId, workspaces, updateWorkspaceContent, setCurrentWorkspace } = useWorkspaceStore();
   const [editorContent, setEditorContent] = useState('');
+
+  const [hasEntered, setHasEntered] = useState(false);
 
   // Load content when workspace changes
   useEffect(() => {
@@ -26,7 +31,38 @@ function App() {
     }
   }, [currentWorkspaceId, workspaces]);
 
-  // Simple routing based on state for now
+  // Check for updates
+  useEffect(() => {
+    // @ts-ignore
+    const { ipcRenderer } = window.require('electron');
+
+    ipcRenderer.on('update-available', () => {
+      toast.info("A new version is available. Downloading now...", {
+        duration: 5000,
+      });
+    });
+
+    ipcRenderer.on('update-downloaded', () => {
+      toast.success("Update downloaded. Restart to apply?", {
+        duration: Infinity,
+        action: {
+          label: 'Restart',
+          onClick: () => ipcRenderer.invoke('restart-app')
+        },
+      });
+    });
+
+    return () => {
+      ipcRenderer.removeAllListeners('update-available');
+      ipcRenderer.removeAllListeners('update-downloaded');
+    };
+  }, []);
+
+  // Routing
+  if (!hasEntered) {
+    return <Welcome onEnter={() => setHasEntered(true)} />;
+  }
+
   if (!currentWorkspaceId) {
     return <Dashboard />;
   }
@@ -81,6 +117,7 @@ function App() {
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden bg-dot-pattern bg-aurora">
+      <TitleBar />
       {/* Premium Header */}
       <header className="border-b border-border/40 bg-background/80 backdrop-blur-md px-6 py-3 flex items-center justify-between shadow-sm z-50 sticky top-0">
         <div className="flex items-center gap-4">
@@ -100,12 +137,19 @@ function App() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="gap-2 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all"
+            onClick={() => {
+              // In a real app, this would trigger a save function. 
+              // Since we auto-save to local state/store, we just show feedback.
+              toast.success("Workspace saved successfully");
+            }}
+          >
             <Save className="h-4 w-4" />
             <span className="hidden sm:inline">Save</span>
           </Button>
-
-          <ThemeToggle />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -127,7 +171,7 @@ function App() {
           </DropdownMenu>
         </div>
       </header>
-
+      <Toaster />
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Generator Panel (Left Sidebar) */}
